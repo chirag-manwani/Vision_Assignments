@@ -2,11 +2,14 @@ import cv2
 import sys
 import os
 
+from ImageSticher import ImageSticher
+
 
 def main(
     img_dir
 ):
-    pass
+    sticher = ImageSticher(img_dir)
+    sticher.stitch()
 
 
 if __name__ == "__main__":
