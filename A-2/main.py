@@ -9,7 +9,8 @@ def main(
     img_dir
 ):
     sticher = ImageSticher(img_dir)
-    sticher.stitch()
+    result = sticher.stitch()
+    cv2.imwrite('out.jpg', result)
 
 
 if __name__ == "__main__":
