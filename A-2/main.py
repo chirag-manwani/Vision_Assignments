@@ -3,6 +3,7 @@ import sys
 import os
 
 from ImageSticher import ImageSticher
+from helper import hisEqulColor
 
 
 def main(
@@ -10,6 +11,7 @@ def main(
 ):
     sticher = ImageSticher(img_dir)
     result = sticher.stitch()
+    result = hisEqulColor(result)
     cv2.imwrite('out.jpg', result)
 
 

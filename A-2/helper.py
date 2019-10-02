@@ -1,5 +1,5 @@
 import numpy as np 
-import cv2 as cv
+import cv2
 
 
 def trim(frame):
@@ -17,7 +17,6 @@ def trim(frame):
 def hisEqulColor(img):
     ycrcb = cv2.cvtColor(img, cv2.COLOR_BGR2YCR_CB)
     channels = cv2.split(ycrcb)
-    print len(channels)
     cv2.equalizeHist(channels[0], channels[0])
     cv2.merge(channels, ycrcb)
     cv2.cvtColor(ycrcb, cv2.COLOR_YCR_CB2BGR, img)
