@@ -13,11 +13,9 @@ class ImageSticher:
     def __init__(
         self,
         img_dir,
-        n_keypoints=10000,
         sigma=1.6
     ):
         self.__load_dir__(img_dir)
-        self.n_keypoints = n_keypoints
         self.sigma = sigma
 
     def __load_dir__(
@@ -45,7 +43,7 @@ class ImageSticher:
     ):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        sift = cv2.xfeatures2d.SIFT_create(self.n_keypoints, sigma=self.sigma)
+        sift = cv2.xfeatures2d.SIFT_create(sigma=self.sigma)
         kps, des = sift.detectAndCompute(gray, None)
 
         kps = np.float32([kp.pt for kp in kps])
@@ -64,10 +62,9 @@ class ImageSticher:
         matches = bf.match(featuresA, featuresB)
 
         matches.sort(key=lambda x: x.distance, reverse=False)
-        # top_matches = matches[:4]
-        # print(matches[0].distance, matches[1].distance)
-        ptsA = np.float32([kpsA[match.queryIdx] for match in matches[:10]])
-        ptsB = np.float32([kpsB[match.trainIdx] for match in matches[:10]])
+
+        ptsA = np.float32([kpsA[match.queryIdx] for match in matches[:20]])
+        ptsB = np.float32([kpsB[match.trainIdx] for match in matches[:20]])
 
         (H, status) = cv2.findHomography(ptsA, ptsB,
                                          cv2.RANSAC,
@@ -79,10 +76,10 @@ class ImageSticher:
         self
     ):
         n = len(self.images)
-        result = self.stitch_2(self.images[-1], self.images[-2])
-        for i in range(n-3, -1, -1):
+        result = self.stitch_2(self.images[1], self.images[0])
+        for i in range(2, n, 1):
             print("i=", i)
-            result = self.stitch_2(result, self.images[i])
+            result = self.stitch_2(self.images[i], result)
         return result
 
     def stitch_2(
@@ -102,26 +99,20 @@ class ImageSticher:
                                     0.25, 4)
 
         (matches, H, status) = M
-        inv_H = np.linalg.inv(H)
 
+        # exit()
         x0 = kps0[matches[0].queryIdx][0]
         x1 = kps1[matches[1].trainIdx][0]
 
         overlap = int(abs(x0 - x1))
-        result_temp = cv2.warpPerspective(img[1],
-                                          inv_H,
-                                          (img[1].shape[1], img[1].shape[0]))
 
-        plt.imshow(cv2.cvtColor(result_temp, cv2.COLOR_BGR2RGB))
-        plt.show()
         result = cv2.warpPerspective(img[0], H,
                                      (img[0].shape[1]+img[1].shape[1], img[0].shape[0]))
-        # plt.imshow(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
-        # plt.show()
+        plt.imshow(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
+        plt.show()
 
         result[0:img[1].shape[0], 0:img[1].shape[1]] = img[1]
         result = trim(result)
         plt.imshow(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
         plt.show()
-        # plt.imsave('out.jpg', cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
         return result
