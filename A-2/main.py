@@ -12,7 +12,7 @@ def main(
     sticher = ImageSticher(img_dir)
     result = sticher.stitch()
     result = hisEqulColor(result)
-    cv2.imwrite('out.jpg', result)
+    cv2.imwrite('./out.jpg', result)
 
 
 if __name__ == "__main__":

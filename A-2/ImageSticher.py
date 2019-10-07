@@ -5,7 +5,7 @@ import natsort
 
 import matplotlib.pyplot as plt
 
-from helper import trim
+from helper import trim, get_alpha
 
 
 class ImageSticher:
@@ -24,7 +24,6 @@ class ImageSticher:
     ):
         files = os.listdir(img_dir)
         files = natsort.natsorted(files)
-        print(files)
         images = []
         for file_ in files:
             if file_.split('.')[-1] not in ['jpg', 'png', 'jpeg']:
@@ -78,7 +77,6 @@ class ImageSticher:
         n = len(self.images)
         result = self.stitch_2(self.images[1], self.images[0])
         for i in range(2, n, 1):
-            print("i=", i)
             result = self.stitch_2(self.images[i], result)
         return result
 
@@ -108,11 +106,16 @@ class ImageSticher:
 
         result = cv2.warpPerspective(img[0], H,
                                      (img[0].shape[1]+img[1].shape[1], img[0].shape[0]))
-        plt.imshow(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
-        plt.show()
 
-        result[0:img[1].shape[0], 0:img[1].shape[1]] = img[1]
+        result[0:img[1].shape[0], 0:img[1].shape[1]-5] = img[1][0:img[1].shape[0], 0:img[1].shape[1]-5]
+
+        width = 101
+        alpha = get_alpha(width)
+
+        result[0:img[1].shape[0], img[1].shape[1]-width:img[1].shape[1]] = \
+            alpha * img[1][0:img[1].shape[0], img[1].shape[1]-width:img[1].shape[1]] + \
+            (1-alpha) * result[0:img[1].shape[0], img[1].shape[1]-width:img[1].shape[1]]
         result = trim(result)
-        plt.imshow(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
-        plt.show()
+        # plt.imshow(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
+        # plt.show()
         return result
