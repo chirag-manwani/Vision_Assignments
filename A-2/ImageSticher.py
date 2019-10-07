@@ -30,7 +30,7 @@ class ImageSticher:
                 continue
             img_path = os.path.join(img_dir, file_)
             img = cv2.imread(img_path)
-            dim = (int(img.shape[1]/4), int(img.shape[0]/4))
+            dim = (int(img.shape[1]/2), int(img.shape[0]/2))
             img = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
             images.append(img)
 
@@ -68,8 +68,8 @@ class ImageSticher:
         (H, status) = cv2.findHomography(ptsA, ptsB,
                                          cv2.RANSAC,
                                          reprojThresh)
-
-        return (matches, H, status)
+        A = cv2.getAffineTransform(ptsA[:3], ptsB[:3])
+        return (matches, H, A)
 
     def stitch(
         self
@@ -96,26 +96,29 @@ class ImageSticher:
                                     des0, des1,
                                     0.25, 4)
 
-        (matches, H, status) = M
+        (matches, H, A) = M
 
-        # exit()
         x0 = kps0[matches[0].queryIdx][0]
         x1 = kps1[matches[1].trainIdx][0]
 
         overlap = int(abs(x0 - x1))
-
+        width = 21
+        alpha = get_alpha(width)
         result = cv2.warpPerspective(img[0], H,
                                      (img[0].shape[1]+img[1].shape[1], img[0].shape[0]))
-
-        result[0:img[1].shape[0], 0:img[1].shape[1]-5] = img[1][0:img[1].shape[0], 0:img[1].shape[1]-5]
-
-        width = 101
-        alpha = get_alpha(width)
+        result[0:img[1].shape[0], 0:img[1].shape[1]-width] = img[1][0:img[1].shape[0], 0:img[1].shape[1]-width]
 
         result[0:img[1].shape[0], img[1].shape[1]-width:img[1].shape[1]] = \
             alpha * img[1][0:img[1].shape[0], img[1].shape[1]-width:img[1].shape[1]] + \
             (1-alpha) * result[0:img[1].shape[0], img[1].shape[1]-width:img[1].shape[1]]
         result = trim(result)
-        # plt.imshow(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
+
+        # result_affine = cv2.warpAffine(img[0],
+        #                                A,
+        #                                (int(img[0].shape[1] + abs(A[0, 2])), int(img[0].shape[0] + abs(A[1, 2]))))
+        # print(result_affine.shape)
+        # result_affine[0:img[1].shape[0], 0:img[1].shape[1]] = img[1]
+        # plt.imshow(cv2.cvtColor(result_affine, cv2.COLOR_BGR2RGB))
         # plt.show()
+
         return result
