@@ -15,9 +15,18 @@ def trim(frame):
 
 
 def hisEqulColor(img):
-    ycrcb = cv2.cvtColor(img, cv2.COLOR_BGR2YCR_CB)
-    channels = cv2.split(ycrcb)
-    cv2.equalizeHist(channels[0], channels[0])
-    cv2.merge(channels, ycrcb)
-    cv2.cvtColor(ycrcb, cv2.COLOR_YCR_CB2BGR, img)
-    return img
+    img_yuv = cv2.cvtColor(img, cv2.COLOR_BGR2YUV)
+    img_yuv[:, :, 0] = cv2.equalizeHist(img_yuv[:, :, 0])
+    img_output = cv2.cvtColor(img_yuv, cv2.COLOR_YUV2BGR)
+    return img_output
+
+
+def get_alpha(width):
+    steps = width - 1
+    alpha = [1]
+    diff = (1) / steps
+    for step in range(steps):
+        last = alpha[-1]
+        alpha.append(last - diff)
+    alpha[-1] = 0
+    return np.vstack([alpha, alpha, alpha]).T
