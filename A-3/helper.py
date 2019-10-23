@@ -38,3 +38,40 @@ def record(
     for frame in frames:
         out.write(frame)
     out.release()
+
+
+def get_keypoints(
+    self,
+    img
+):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    sift = cv2.xfeatures2d.SIFT_create(sigma=self.sigma)
+    kps, des = sift.detectAndCompute(gray, None)
+
+    kps = np.float32([kp.pt for kp in kps])
+    return kps, des
+
+
+def matchKeypoints(
+    self,
+    kpsA,
+    kpsB,
+    featuresA,
+    featuresB,
+    ratio,
+    reprojThresh
+):
+    bf = cv2.BFMatcher(crossCheck=True)
+    matches = bf.match(featuresA, featuresB)
+
+    matches.sort(key=lambda x: x.distance, reverse=False)
+
+    ptsA = np.float32([kpsA[match.queryIdx] for match in matches[:20]])
+    ptsB = np.float32([kpsB[match.trainIdx] for match in matches[:20]])
+
+    (H, status) = cv2.findHomography(ptsA, ptsB,
+                                        cv2.RANSAC,
+                                        reprojThresh)
+    A = cv2.getAffineTransform(ptsA[:3], ptsB[:3])
+    return (matches, H, A)
